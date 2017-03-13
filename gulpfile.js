@@ -12,9 +12,9 @@ var gulp = require( "gulp" ),
     sourcemaps = require( "gulp-sourcemaps" ),
     fCompileExo;
 
-fCompileExo = function( sExoName ) {
+fCompileExo = function( sFolderName ) {
     return function() {
-        gulp.src( "exo-" + sExoName + "/script.js" )
+        gulp.src( [ sFolderName + "/*.js", "!" + sFolderName + "/*.min.js" ] )
             .pipe( sourcemaps.init() )
             .pipe( babel() )
             .on( "error", function( oError ) {
@@ -22,34 +22,30 @@ fCompileExo = function( sExoName ) {
                 this.emit( "end" );
             } )
             .pipe( sourcemaps.write() )
-            .pipe( rename( "script.min.js" ) )
-            .pipe( gulp.dest( "exo-" + sExoName ) );
+            .pipe( rename( function( path ) {
+                path.basename += ".min";
+            } ) )
+            .pipe( gulp.dest( sFolderName ) );
     };
 };
 
 // --- Task for js
 
-gulp.task( "exo-one", fCompileExo( "one" ) );
-gulp.task( "exo-two", fCompileExo( "two" ) );
-gulp.task( "exo-three", fCompileExo( "three" ) );
-gulp.task( "exo-four", fCompileExo( "four" ) );
-gulp.task( "exo-five", fCompileExo( "five" ) );
-gulp.task( "exo-six", fCompileExo( "six" ) );
-gulp.task( "exo-seven", fCompileExo( "seven" ) );
+let aFolders = [ "_shared", "exo-one", "exo-two", "exo-three", "exo-four", "exo-five", "exo-six", "exo-seven" ];
+
+aFolders.forEach( function( sFolder ) {
+    gulp.task( sFolder, fCompileExo( sFolder ) );
+} );
 
 // --- Watch tasks
 
 gulp.task( "watch", function() {
-    gulp.watch( "exo-one/script.js", [ "exo-one" ] );
-    gulp.watch( "exo-two/script.js", [ "exo-two" ] );
-    gulp.watch( "exo-three/script.js", [ "exo-three" ] );
-    gulp.watch( "exo-four/script.js", [ "exo-four" ] );
-    gulp.watch( "exo-five/script.js", [ "exo-five" ] );
-    gulp.watch( "exo-six/script.js", [ "exo-six" ] );
-    gulp.watch( "exo-seven/script.js", [ "exo-seven" ] );
+    aFolders.forEach( function( sFolder ) {
+        gulp.watch( [ sFolder + "/*.js", "!" + sFolder + "/*.min.js" ], [ sFolder ] );
+    } );
 } );
 
 // --- Aliases
 
-gulp.task( "default", [ "exo-one", "exo-two", "exo-three", "exo-four", "exo-five", "exo-six", "exo-seven" ] );
+gulp.task( "default", aFolders );
 gulp.task( "work", [ "default", "watch" ] );
